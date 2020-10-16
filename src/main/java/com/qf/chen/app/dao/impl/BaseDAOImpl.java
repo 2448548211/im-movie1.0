@@ -5,12 +5,8 @@ import com.qf.chen.app.utils.ClassTableName;
 import com.qf.chen.app.utils.DButil;
 import com.qf.chen.app.utils.FieldColName;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
 
 /**
@@ -20,12 +16,12 @@ import java.util.List;
  * @since JDK 1.8
  */
 public class BaseDAOImpl<T> implements IBaseDAO <T>{
+    private static final String SELECT_ALL = "SELECT";
+    private static final String SPACE = " ";
+    private static final String FROM = "FROM";
+
     @Override
-    public int insert(String sql, Object... objs) {
-        return insert(sql,this.getClass(),objs);
-    }
-    @Override
-    public int insert(String sql, Class<T> tClass, Object... objs) {
+    public int update(String sql, Class<T> tClass, Object... objs) {
         int affectedRows = 0;
         Connection conn = null;
         PreparedStatement ps = null;
@@ -45,8 +41,6 @@ public class BaseDAOImpl<T> implements IBaseDAO <T>{
         }
         return affectedRows;
     }
-
-
     @Override
     /**
      * 依据ID获取对应的数据库的数据
@@ -72,10 +66,10 @@ public class BaseDAOImpl<T> implements IBaseDAO <T>{
             }
             ps.setObject(i,id);
             ResultSet rSet = ps.executeQuery();
-            t = tClass.newInstance();
             Field[] fields = tClass.getFields();
             String temp;
             if(rSet.next()){
+                t = tClass.newInstance();
                 for (Field f : fields) {
                     temp = f.getAnnotation(FieldColName.class).value();
                     temp = (temp!=null&&temp!="")?temp:f.getName();
@@ -91,7 +85,44 @@ public class BaseDAOImpl<T> implements IBaseDAO <T>{
     }
 
     @Override
-    public List<T> selectAll(String id) {
+    public List<T> selectAll(Class<T> tClass) {
+        StringBuffer sql = new StringBuffer(SELECT_ALL);
+        List<T> list = null;
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try{
+            conn = DButil.getConnection();
+            Field[] fields = tClass.getFields();
+            T t = null;
+            String colName = null;
+            FieldColName annotation = null;
+            for (Field f:fields){
+                annotation = f.getAnnotation(FieldColName.class);
+                colName = (annotation==null||"".equals(annotation.value())) ? f.getName():annotation.value();
+                sql.append(SPACE);
+                sql.append(colName);
+            }
+            sql.append(SPACE);
+            sql.append(FROM);
+            /*
+            传入参数不是直接的sql语句字符串，风险较小，所以直接添加到sql语句后了
+            将传入的实体类对应的表添加到sql语句后面
+            */
+            sql.append(tClass.getAnnotation(ClassTableName.class).value());
+            Statement st = conn.createStatement();
+            ResultSet rSet = st.executeQuery(sql.toString());
+            while(rSet.next()){
+                t = tClass.newInstance();
+                for (Field f:fields){
+                    annotation = f.getAnnotation(FieldColName.class);
+                    colName = (annotation==null||"".equals(annotation.value())) ? f.getName():annotation.value();
+                    f.set(t,rSet.getObject(colName));
+                }
+            }
+        } catch (SQLException | InstantiationException | IllegalAccessException throwables) {
+            throwables.printStackTrace();
+        }
+
         return null;
     }
 }
