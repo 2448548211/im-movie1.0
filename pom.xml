@@ -19,7 +19,9 @@
     <maven.compiler.target>1.7</maven.compiler.target>
     <junit.version>4.12</junit.version>
     <mysql.version>8.0.21</mysql.version>
-    <javax.servlet.version>3.1.0</javax.servlet.version>
+    <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
+    <javax.servlet.jstl.version>1.2</javax.servlet.jstl.version>
+    <org.glassfish.web.jstl-impl.version>1.2</org.glassfish.web.jstl-impl.version>
   </properties>
 
   <dependencies>
@@ -37,8 +39,18 @@
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
-      <version>${javax.servlet.version}</version>
+      <version>${javax.servlet-api.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jstl</artifactId>
+      <version>${javax.servlet.jstl.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.web</groupId>
+      <artifactId>jstl-impl</artifactId>
+      <version>${org.glassfish.web.jstl-impl.version}</version>
     </dependency>
   </dependencies>
 
